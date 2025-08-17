@@ -1,17 +1,31 @@
 import argparse
 import logging
 import time
+from pathlib import Path
 
 import numpy as np
 import torch.utils.data
+import yaml
 
-from hardware.device import get_device
+# from hardware.device import get_device
 from inference.post_process import post_process_output
 from utils.data import get_dataset
 from utils.dataset_processing import evaluation, grasp
 from utils.visualisation.plot import save_results
 
 logging.basicConfig(level=logging.INFO)
+
+
+def parse_yaml_file(filepath):
+    assert filepath.exists(), f"Non-existent yaml file: {filepath}"
+    with open(filepath, "r") as f:
+        data = yaml.safe_load(f)
+    return data
+
+
+def write_yaml_file(data, filepath):
+    with open(filepath, "w") as f:
+        yaml.dump(data, f, default_flow_style=False)
 
 
 def parse_args():
@@ -25,7 +39,7 @@ def parse_args():
 
     # Dataset
     parser.add_argument('--dataset', type=str,
-                        help='Dataset Name ("cornell" or "jaquard")')
+                        help='Dataset Name ("cornell", "jacquard", "grasp-anything")')
     parser.add_argument('--dataset-path', type=str,
                         help='Path to dataset')
     parser.add_argument('--use-depth', type=int, default=1,
@@ -77,7 +91,8 @@ if __name__ == '__main__':
     args = parse_args()
 
     # Get the compute device
-    device = get_device(args.force_cpu)
+    # device = get_device(args.force_cpu)
+    device = "cuda:0"
 
     # Load Dataset
     logging.info('Loading {} Dataset...'.format(args.dataset.title()))
@@ -107,12 +122,15 @@ if __name__ == '__main__':
         sampler=val_sampler
     )
     logging.info('Done')
+    
+    results_dir = Path("results")
+    results_dir.mkdir(exist_ok=True)
 
     for network in args.network:
         logging.info('\nEvaluating model {}'.format(network))
 
         # Load Network
-        net = torch.load(network)
+        net = torch.load(network, weights_only=False)
 
         results = {'correct': 0, 'failed': 0}
 
@@ -120,11 +138,21 @@ if __name__ == '__main__':
             jo_fn = network + '_jacquard_output.txt'
             with open(jo_fn, 'w') as f:
                 pass
+        
+        network_name = network.replace("/", "-")
+        results_subdir = results_dir / f"{network_name}"
+        results_subdir.mkdir(exist_ok=True)
+        results_list = []
 
         start_time = time.time()
 
         with torch.no_grad():
             for idx, (x, y, didx, rot, zoom) in enumerate(test_data):
+                jname = test_data.dataset.get_jname(didx)
+                
+                data_info = dict()
+                data_info["name"] = jname
+                
                 xc = x.to(device)
                 yc = [yi.to(device) for yi in y]
                 lossd = net.compute_loss(xc, yc)
@@ -142,13 +170,21 @@ if __name__ == '__main__':
                         results['correct'] += 1
                     else:
                         results['failed'] += 1
+                    data_info["success"] = bool(s)
 
                 if args.jacquard_output:
                     grasps = grasp.detect_grasps(q_img, ang_img, width_img=width_img, no_grasps=1)
+                    
+                    data_info["grasps"] = []
+                    
                     with open(jo_fn, 'a') as f:
                         for g in grasps:
-                            f.write(test_data.dataset.get_jname(didx) + '\n')
-                            f.write(g.to_jacquard(scale=1024 / 300) + '\n')
+                            g_jaq = g.to_jacquard(scale=1024 / 300)
+                            
+                            f.write(jname + '\n')
+                            f.write(g_jaq + '\n')
+                            
+                            data_info["grasps"].append(g_jaq)
 
                 if args.vis:
                     save_results(
@@ -157,8 +193,13 @@ if __name__ == '__main__':
                         grasp_q_img=q_img,
                         grasp_angle_img=ang_img,
                         no_grasps=args.n_grasps,
-                        grasp_width_img=width_img
+                        grasp_width_img=width_img,
+                        save_prefix=results_subdir / f"{jname}",
                     )
+                    
+                    data_info["out_path"] = str(results_subdir / f"{jname}-rgb.png")  # others can be inferred
+                    
+                results_list.append(data_info)
 
         avg_time = (time.time() - start_time) / len(test_data)
         logging.info('Average evaluation time per image: {}ms'.format(avg_time * 1000))
@@ -167,9 +208,18 @@ if __name__ == '__main__':
             logging.info('IOU Results: %d/%d = %f' % (results['correct'],
                                                       results['correct'] + results['failed'],
                                                       results['correct'] / (results['correct'] + results['failed'])))
+            summary = {
+                "correct": results['correct'],
+                "total": results['correct'] + results['failed'],
+                "rate": results['correct'] / (results['correct'] + results['failed']),
+            }
+            results_list.insert(0, summary)
 
         if args.jacquard_output:
             logging.info('Jacquard output saved to {}'.format(jo_fn))
+        
+        # end
+        write_yaml_file(results_list, f"{network_name}-{args.dataset}.yml")
 
         del net
         torch.cuda.empty_cache()

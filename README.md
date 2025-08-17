@@ -9,13 +9,19 @@ This is the repository of the paper "Grasp-Anything: Large-scale Grasp Dataset f
 ## Installation
 - Create a virtual environment
 ```bash
-$ conda create -n granything python=3.9
+$ conda create -n granything python=3.8 -y
+# for RTX 50 series:
+$ conda create -n granything python=3.10 -y
 $ conda activate granything
 ```
 
 - Install pytorch
 ```bash
-$ conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit=11.3 -c pytorch
+$ pip install setuptools==69.5.1
+# $ conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit=11.3 -c pytorch -y
+$ conda install -y pytorch==2.0.1 torchvision==0.15.2 pytorch-cuda=11.7 -c pytorch -c nvidia -y
+# for RTX 50 series:
+$ pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu129
 $ pip install -r requirements.txt
 ```
 

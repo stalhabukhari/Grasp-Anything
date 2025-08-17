@@ -1,11 +1,11 @@
-numpy
-opencv-python
-matplotlib
+numpy<1.23.0
+opencv-python<4.10
+matplotlib<4
 scikit-image
 imageio
-torch
-torchvision
-torchsummary
 tensorboardX
 pyrealsense2
 Pillow
+imagecodecs
+pandas
+pyyaml

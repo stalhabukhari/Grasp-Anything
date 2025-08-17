@@ -116,7 +116,8 @@ def plot_grasp(
         fig.savefig('results/{}.png'.format(time))
 
 
-def save_results(rgb_img, grasp_q_img, grasp_angle_img, depth_img=None, no_grasps=1, grasp_width_img=None):
+def save_results(rgb_img, grasp_q_img, grasp_angle_img, depth_img=None, no_grasps=1, grasp_width_img=None,
+                 save_prefix=""):
     """
     Plot the output of a network
     :param rgb_img: RGB Image
@@ -130,17 +131,18 @@ def save_results(rgb_img, grasp_q_img, grasp_angle_img, depth_img=None, no_grasp
     gs = detect_grasps(grasp_q_img, grasp_angle_img, width_img=grasp_width_img, no_grasps=no_grasps)
 
     fig = plt.figure(figsize=(10, 10))
-    plt.ion()
+    # plt.ion()
     plt.clf()
     ax = plt.subplot(111)
     ax.imshow(rgb_img)
     ax.set_title('RGB')
     ax.axis('off')
-    fig.savefig('results/rgb.png')
+    fig.savefig(f'{save_prefix}-rgb.png')
+    # plt.show()
 
     if depth_img.any():
         fig = plt.figure(figsize=(10, 10))
-        plt.ion()
+        # plt.ion()
         plt.clf()
         ax = plt.subplot(111)
         ax.imshow(depth_img, cmap='gray')
@@ -148,10 +150,11 @@ def save_results(rgb_img, grasp_q_img, grasp_angle_img, depth_img=None, no_grasp
             g.plot(ax)
         ax.set_title('Depth')
         ax.axis('off')
-        fig.savefig('results/depth.png')
+        fig.savefig(f'{save_prefix}-depth.png')
+        # plt.show()
 
     fig = plt.figure(figsize=(10, 10))
-    plt.ion()
+    # plt.ion()
     plt.clf()
     ax = plt.subplot(111)
     ax.imshow(rgb_img)
@@ -159,37 +162,41 @@ def save_results(rgb_img, grasp_q_img, grasp_angle_img, depth_img=None, no_grasp
         g.plot(ax)
     ax.set_title('Grasp')
     ax.axis('off')
-    fig.savefig('results/grasp.png')
+    fig.savefig(f'{save_prefix}-grasp.png')
+    # plt.show()
 
     fig = plt.figure(figsize=(10, 10))
-    plt.ion()
+    # plt.ion()
     plt.clf()
     ax = plt.subplot(111)
     plot = ax.imshow(grasp_q_img, cmap='jet', vmin=0, vmax=1)
     ax.set_title('Q')
     ax.axis('off')
     plt.colorbar(plot)
-    fig.savefig('results/quality.png')
+    fig.savefig(f'{save_prefix}-quality.png')
+    # plt.show()
 
     fig = plt.figure(figsize=(10, 10))
-    plt.ion()
+    # plt.ion()
     plt.clf()
     ax = plt.subplot(111)
     plot = ax.imshow(grasp_angle_img, cmap='hsv', vmin=-np.pi / 2, vmax=np.pi / 2)
     ax.set_title('Angle')
     ax.axis('off')
     plt.colorbar(plot)
-    fig.savefig('results/angle.png')
+    fig.savefig(f'{save_prefix}-angle.png')
+    # plt.show()
 
     fig = plt.figure(figsize=(10, 10))
-    plt.ion()
+    # plt.ion()
     plt.clf()
     ax = plt.subplot(111)
     plot = ax.imshow(grasp_width_img, cmap='jet', vmin=0, vmax=100)
     ax.set_title('Width')
     ax.axis('off')
     plt.colorbar(plot)
-    fig.savefig('results/width.png')
+    fig.savefig(f'{save_prefix}-width.png')
+    # plt.show()
 
     fig.canvas.draw()
     plt.close(fig)
