@@ -130,7 +130,8 @@ if __name__ == '__main__':
         logging.info('\nEvaluating model {}'.format(network))
 
         # Load Network
-        net = torch.load(network, weights_only=False)
+        net = torch.load(network, weights_only=False).to(device)
+        print(f"> Loaded: {network}")
 
         results = {'correct': 0, 'failed': 0}
 
@@ -148,7 +149,20 @@ if __name__ == '__main__':
 
         with torch.no_grad():
             for idx, (x, y, didx, rot, zoom) in enumerate(test_data):
-                jname = test_data.dataset.get_jname(didx)
+                if hasattr(test_data.dataset, 'get_jname'):
+                    jname = test_data.dataset.get_jname(didx)
+                else:
+                    fname = Path(test_data.dataset.grasp_files[didx]).stem
+                    jname = f"{didx.item()}_{fname}"
+                
+                yml_fp = results_subdir / f"{jname}.yml"
+                if yml_fp.exists():
+                    print(f"> Skipping: {jname}")
+                    data_info = parse_yaml_file(yml_fp)
+                    results_list.append(data_info)
+                    continue
+                
+                print(f"> Processing: {jname}")
                 
                 data_info = dict()
                 data_info["name"] = jname
@@ -187,9 +201,13 @@ if __name__ == '__main__':
                             data_info["grasps"].append(g_jaq)
 
                 if args.vis:
+                    _depth_img = None
+                    if args.dataset != "grasp-anything":
+                        _depth_img = test_data.dataset.get_depth(didx, rot, zoom)
+                    
                     save_results(
                         rgb_img=test_data.dataset.get_rgb(didx, rot, zoom, normalise=False),
-                        depth_img=test_data.dataset.get_depth(didx, rot, zoom),
+                        depth_img=_depth_img,
                         grasp_q_img=q_img,
                         grasp_angle_img=ang_img,
                         no_grasps=args.n_grasps,
@@ -199,6 +217,8 @@ if __name__ == '__main__':
                     
                     data_info["out_path"] = str(results_subdir / f"{jname}-rgb.png")  # others can be inferred
                     
+                # log
+                write_yaml_file(data_info, yml_fp)
                 results_list.append(data_info)
 
         avg_time = (time.time() - start_time) / len(test_data)
