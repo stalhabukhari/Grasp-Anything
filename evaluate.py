@@ -79,8 +79,8 @@ def parse_args():
 
     args = parser.parse_args()
 
-    if args.jacquard_output and args.dataset != 'jacquard':
-        raise ValueError('--jacquard-output can only be used with the --dataset jacquard option.')
+    # if args.jacquard_output and args.dataset != 'jacquard':
+    #     raise ValueError('--jacquard-output can only be used with the --dataset jacquard option.')
     if args.jacquard_output and args.augment:
         raise ValueError('--jacquard-output can not be used with data augmentation.')
 

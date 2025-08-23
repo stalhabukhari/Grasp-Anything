@@ -9,7 +9,7 @@ python evaluate.py \
     --dataset-path data/grasp-anything \
     --num-workers 0 \
     --use-depth 0 --use-rgb 1 \
-    --iou-eval --vis
+    --iou-eval --vis --jacquard-output
 
 # # dataset: jacquard
 # python evaluate.py \
