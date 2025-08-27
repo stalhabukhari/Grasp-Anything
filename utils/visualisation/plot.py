@@ -6,6 +6,7 @@ import numpy as np
 
 from utils.dataset_processing.grasp import detect_grasps
 
+plt.switch_backend('agg')
 warnings.filterwarnings("ignore")
 
 
@@ -139,6 +140,7 @@ def save_results(rgb_img, grasp_q_img, grasp_angle_img, depth_img=None, no_grasp
     ax.axis('off')
     fig.savefig(f'{save_prefix}-rgb.png')
     # plt.show()
+    plt.close(fig)
 
     if depth_img is not None and depth_img.any():
         fig = plt.figure(figsize=(10, 10))
@@ -152,6 +154,7 @@ def save_results(rgb_img, grasp_q_img, grasp_angle_img, depth_img=None, no_grasp
         ax.axis('off')
         fig.savefig(f'{save_prefix}-depth.png')
         # plt.show()
+        plt.close(fig)
 
     fig = plt.figure(figsize=(10, 10))
     # plt.ion()
@@ -164,6 +167,7 @@ def save_results(rgb_img, grasp_q_img, grasp_angle_img, depth_img=None, no_grasp
     ax.axis('off')
     fig.savefig(f'{save_prefix}-grasp.png')
     # plt.show()
+    plt.close(fig)
 
     fig = plt.figure(figsize=(10, 10))
     # plt.ion()
@@ -175,6 +179,7 @@ def save_results(rgb_img, grasp_q_img, grasp_angle_img, depth_img=None, no_grasp
     plt.colorbar(plot)
     fig.savefig(f'{save_prefix}-quality.png')
     # plt.show()
+    plt.close(fig)
 
     fig = plt.figure(figsize=(10, 10))
     # plt.ion()
@@ -186,6 +191,7 @@ def save_results(rgb_img, grasp_q_img, grasp_angle_img, depth_img=None, no_grasp
     plt.colorbar(plot)
     fig.savefig(f'{save_prefix}-angle.png')
     # plt.show()
+    plt.close(fig)
 
     fig = plt.figure(figsize=(10, 10))
     # plt.ion()
@@ -198,5 +204,5 @@ def save_results(rgb_img, grasp_q_img, grasp_angle_img, depth_img=None, no_grasp
     fig.savefig(f'{save_prefix}-width.png')
     # plt.show()
 
-    fig.canvas.draw()
+    # fig.canvas.draw()
     plt.close(fig)
